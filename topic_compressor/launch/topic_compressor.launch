@@ -1,0 +1,9 @@
+<launch>
+    <!-- Config file path -->
+    <arg name="config_file" default="$(find topic_compressor)/config/quad_robot.yaml"/>
+    
+    <!-- Topic compressor node -->
+    <node name="topic_compressor" pkg="topic_compressor" type="topic_compressor_node.py" output="screen">
+        <param name="config_file" value="$(arg config_file)"/>
+    </node>
+</launch>
