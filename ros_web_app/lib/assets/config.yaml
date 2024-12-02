@@ -1,4 +1,4 @@
-robot_id : "segway_e1"
-ip_address : "192.168.1.50"
-rosbridge_port : ""
+robot_id : "unitree_go1"
+ip_address : "0.0.0.0"
+rosbridge_port : "9090"
 fastapi_port : "8000"

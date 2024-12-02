@@ -1,16 +1,29 @@
-import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:typed_data';
 
 class RosService {
-  IOWebSocketChannel? channel;
+  WebSocketChannel? channel;
   String uri;
 
   RosService(this.uri);
 
   Future<void> connect() async {
-    channel = await IOWebSocketChannel.connect(uri);
+    try {
+      channel = WebSocketChannel.connect(Uri.parse(uri));
+      // 연결 후 상태 확인을 위한 ping 메시지 전송
+      var pingMessage = {
+        'op': 'ping'
+      };
+      channel!.sink.add(json.encode(pingMessage));
+    } catch (e) {
+      throw Exception('Failed to connect to ROS: $e');
+    }
+  }
+
+  bool isConnected() {
+    return channel != null;
   }
 
   void publish(String message) {

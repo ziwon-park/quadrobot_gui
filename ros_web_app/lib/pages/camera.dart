@@ -9,7 +9,7 @@ class CameraViewer extends StatefulWidget {
 }
 
 class _CameraViewerState extends State<CameraViewer> {
-  Uint8List? _imageData;
+  final ValueNotifier<Uint8List?> _imageNotifier = ValueNotifier<Uint8List?>(null);
   late RosService _rosService;
 
   @override
@@ -22,21 +22,20 @@ class _CameraViewerState extends State<CameraViewer> {
   Future<void> _connectToRos() async {
     await _rosService.connect();
     _rosService.subscribeImage(
-      '/camera/image_raw/compressed',  // 실제 카메라 토픽으로 수정 필요
+      '/camera_face/color/image_raw/compressed', 
       (Uint8List data, int size) {
-        setState(() {
-          _imageData = data;
-        });
+        _imageNotifier.value = data;
       }
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4.0,
       child: Container(
-        height: 300,  // 높이는 상황에 맞게 조정
+        height: 300,
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,14 +49,20 @@ class _CameraViewerState extends State<CameraViewer> {
             ),
             SizedBox(height: 8.0),
             Expanded(
-              child: _imageData != null
-                ? Image.memory(
-                    _imageData!,
-                    fit: BoxFit.contain,
-                  )
-                : Center(
-                    child: CircularProgressIndicator(),
-                  ),
+              child: ValueListenableBuilder<Uint8List?>(
+                valueListenable: _imageNotifier,
+                builder: (context, imageData, child) {
+                  return imageData != null
+                    ? Image.memory(
+                        imageData,
+                        fit: BoxFit.contain,
+                        gaplessPlayback: true,
+                      )
+                    : Center(
+                        child: CircularProgressIndicator(),
+                      );
+                },
+              ),
             ),
           ],
         ),
@@ -67,6 +72,7 @@ class _CameraViewerState extends State<CameraViewer> {
 
   @override
   void dispose() {
+    _imageNotifier.dispose();
     _rosService.disconnect();
     super.dispose();
   }
