@@ -52,10 +52,10 @@ class _InitialPageState extends State<InitialPage> {
     globals.full_address = fullAddress;
     print("새로운 IP 주소가 저장되었습니다: ${globals.full_address}");
 
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => MainPage()),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MainPage()),
+    );
   }
 
   @override
