@@ -3,8 +3,9 @@ import '../globals.dart' as globals;
 
 import '../ros_service.dart';
 import './camera.dart';
-import './point_cloud.dart';
 import './controller.dart';
+import './map.dart';
+import './communication.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -24,7 +25,9 @@ class _MainPageState extends State<MainPage> {
           children: [
             CameraViewer(),
             SizedBox(height: 16.0),
-            PointCloudViewer(),
+            MapViewer(),
+            SizedBox(height: 16.0),
+            CommunicationPanel(),
             SizedBox(height: 16.0),
             ControllerBlock(),
           ],

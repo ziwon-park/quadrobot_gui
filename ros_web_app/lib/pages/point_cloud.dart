@@ -1,201 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'package:three_dart/three_dart.dart' as three;
-import 'package:flutter_gl/flutter_gl.dart';
-import 'package:flutter_gl/native-array/index.dart';
-import 'dart:typed_data';
-import '../globals.dart' as globals;
-import '../ros_service.dart';
+import 'dart:html' as html;
+import 'dart:ui' as ui;
+import 'dart:convert';
 
 class PointCloudViewer extends StatefulWidget {
-  const PointCloudViewer({Key? key}) : super(key: key);
+  final List<List<double>> points;
+  final String title;
+
+  const PointCloudViewer({
+    Key? key,
+    required this.points,
+    this.title = 'Point Cloud Visualization',
+  }) : super(key: key);
 
   @override
-  _PointCloudViewerState createState() => _PointCloudViewerState();
+  State<PointCloudViewer> createState() => _PointCloudViewerState();
 }
 
 class _PointCloudViewerState extends State<PointCloudViewer> {
-  late FlutterGlPlugin three3dRender;
-  three.WebGLRenderer? renderer;
-  three.Scene? scene;
-  three.PerspectiveCamera? camera;
-  three.Points? points;  // nullable로 변경
-  RosService? _rosService;
-  
-  bool hasData = false;
-  int pointCount = 0;
-  
-  Size? screenSize;
-  int? fboId;
-  double width = 600;
-  double height = 400;
-  bool disposed = false;
-  bool isInitialized = false;
+  late final String viewId;
 
   @override
   void initState() {
     super.initState();
-    three3dRender = FlutterGlPlugin();
-    _initializeViewer();
-  }
-
-  Future<void> _initializeViewer() async {
-    await initPlatformState();
-    _rosService = RosService(globals.full_address);
-    await _connectToRos();
-  }
-
-  Future<void> _connectToRos() async {
-    await _rosService?.connect();
-    print("ROS Connected, subscribing to point cloud...");
-    _rosService?.subscribeToPointCloud(
-      '/os_cloud_node/points/downsampled',
-      (List<double> points) {
-        print("Received point cloud data: ${points.length} values");
-        if (isInitialized) {
-          updatePointCloud(points);
-        }
-      }
+    viewId = 'point-cloud-view-${DateTime.now().millisecondsSinceEpoch}';
+    ui.platformViewRegistry.registerViewFactory(
+      viewId, 
+      (int viewId) => _createHtmlElement(),
     );
   }
 
-  Future<void> initPlatformState() async {
-    Map<String, dynamic> options = {
-      "antialias": true,
-      "alpha": false,
-      "width": width.toInt(),
-      "height": height.toInt(),
-      "dpr": 1.0
-    };
-
-    await three3dRender.initialize(options: options);
-    await initScene();
-    setState(() {
-      isInitialized = true;
-    });
-  }
-
-  Future<void> initScene() async {
-    scene = three.Scene();
+  html.HtmlElement _createHtmlElement() {
+    final div = html.DivElement()
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..id = 'plot';
     
-    camera = three.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera?.position.set(0, 0, 5);
-    camera?.lookAt(three.Vector3(0, 0, 0));
-
-    Map<String, dynamic> renderProps = {
-      "canvas": three3dRender.element,
-      "context": three3dRender.gl,
-      "antialias": true
-    };
-    renderer = three.WebGLRenderer(renderProps);
-    renderer?.setSize(width, height, true);
+    final pointsJson = jsonEncode(widget.points);
     
-    var gridHelper = three.GridHelper(10, 10);
-    scene?.add(gridHelper);
+    // Plotly.js 스크립트 추가
+    final plotlyScript = html.ScriptElement()
+      ..src = 'https://cdn.plot.ly/plotly-latest.min.js';
+    div.children.add(plotlyScript);
     
-    var axesHelper = three.AxesHelper(5);
-    scene?.add(axesHelper);
-    
-    var geometry = three.BufferGeometry();
-    var material = three.PointsMaterial({
-      "size": 0.02,
-      "sizeAttenuation": true,
-      "color": three.Color(0x00ff00),
-    });
-    
-    points = three.Points(geometry, material);
-    // points?.rotation.x = -three.Math.PI / 2;
-    scene?.add(points!);
+    // 데이터 시각화 스크립트 추가
+    final visualizationScript = html.ScriptElement()
+      ..text = '''
+        const points = $pointsJson;
+        
+        const trace = {
+          type: 'scatter3d',
+          mode: 'markers',
+          x: points.map(p => p[0]),
+          y: points.map(p => p[1]),
+          z: points.map(p => p[2]),
+          marker: {
+            size: 2,
+            opacity: 0.8,
+          }
+        };
 
-    animate();
-  }
+        const layout = {
+          margin: { l: 0, r: 0, b: 0, t: 0 },
+          scene: {
+            camera: {
+              eye: { x: 1.5, y: 1.5, z: 1.5 }
+            }
+          }
+        };
 
-  void updatePointCloud(List<double> pointsData) {
-    if (disposed || points == null) return;
+        plotlyScript.onload = () => {
+          Plotly.newPlot('plot', [trace], layout);
+        };
+      ''';
+    div.children.add(visualizationScript);
 
-    try {
-      Float32Array float32Array = Float32Array(pointsData.length);
-      for (int i = 0; i < pointsData.length; i++) {
-        float32Array[i] = pointsData[i];
-      }
-
-      var positions = three.Float32BufferAttribute(float32Array, 3);
-      var geometry = three.BufferGeometry();
-      geometry.setAttribute('position', positions);
-
-      points?.geometry = geometry;
-      
-      setState(() {
-        hasData = true;
-        pointCount = pointsData.length ~/ 3;
-      });
-      
-      print("Updated point cloud with ${pointCount} points");
-    } catch (e) {
-      print("Error updating point cloud: $e");
-    }
-  }
-
-  void animate() {
-    if (disposed) return;
-    render();
-    Future.delayed(const Duration(milliseconds: 16), animate);
-  }
-
-  void render() {
-    if (disposed || !isInitialized || scene == null || camera == null) return;
-
-    final _gl = three3dRender.gl;
-    renderer?.render(scene!, camera!);
-    _gl.flush();
-
-    if (!kIsWeb) {
-      three3dRender.updateTexture(fboId!);
-    }
+    return div;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      child: Stack(
-        children: [
-          if (three3dRender.isInitialized)
-            HtmlElementView(viewType: three3dRender.textureId!.toString()),
-          Positioned(
-            top: 10,
-            right: 10,
-            child: Container(
-              padding: EdgeInsets.all(8),
-              color: Colors.black54,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'Point Cloud Viewer',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  if (hasData) Text(
-                    'Points: $pointCount',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (!three3dRender.isInitialized)
-            const Center(child: CircularProgressIndicator()),
-        ],
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    disposed = true;
-    three3dRender.dispose();
-    _rosService?.disconnect();
-    super.dispose();
+    return HtmlElementView(viewType: viewId);
   }
 }

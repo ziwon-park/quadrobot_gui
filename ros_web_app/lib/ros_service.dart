@@ -81,6 +81,54 @@ class RosService {
     });
   }
 
+  void subscribeToMap(String topic, Function(List<int> data, int width, int height, double resolution) callback) {
+    var subscribeMessage = {
+      'op': 'subscribe',
+      'topic': topic,
+      'type': 'nav_msgs/OccupancyGrid',
+    };
+    channel?.sink.add(json.encode(subscribeMessage));
+    
+    // 명시적으로 한번 요청
+    var requestMessage = {
+      'op': 'call_service',
+      'service': '/static_map',  // static_map 서비스 사용
+      'type': 'nav_msgs/GetMap',
+      'args': {}
+    };
+    channel?.sink.add(json.encode(requestMessage));
+    
+    channel?.stream.listen((message) {
+      var data = json.decode(message);
+      if (data['msg'] != null) {
+        var msg = data['msg'];
+        var info = msg['info'];
+        var width = info['width'];
+        var height = info['height'];
+        var resolution = info['resolution'].toDouble();
+        
+        // Convert base64 data to List<int>
+        List<int> mapData = List<int>.from(msg['data']);
+        
+        callback(mapData, width, height, resolution);
+      }
+    });
+  }
+
+  void subscribeTopic(String topic, Function(dynamic) callback) {
+    var message = {
+      'op': 'subscribe',
+      'topic': topic,
+    };
+    channel?.sink.add(json.encode(message));
+    channel?.stream.listen((message) {
+      var data = json.decode(message);
+      if (data['msg'] != null) {
+        callback(data['msg']);
+      }
+    });
+  }
+
   void disconnect() {
     if (channel != null) {
       channel?.sink.close();
