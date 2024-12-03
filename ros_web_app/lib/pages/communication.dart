@@ -47,7 +47,6 @@ class _CommunicationPanelState extends State<CommunicationPanel> {
   final List<String> monitoredTopics = [
     '/go1_gazebo/camera/color/image_raw/compressed',
     '/map',
-    // Add more topics as needed
   ];
 
   @override
