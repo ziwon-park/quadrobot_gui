@@ -53,6 +53,34 @@ class RosService {
     });
   }
 
+  void subscribeToPointCloud(String topic, Function(List<double>) callback) {
+    var message = {
+      'op': 'subscribe',
+      'topic': topic,
+      'type': 'sensor_msgs/PointCloud2',
+    };
+    channel?.sink.add(json.encode(message));
+    
+    channel?.stream.listen((message) {
+      var data = json.decode(message);
+      if (data['msg'] != null && data['msg']['data'] != null) {
+        List<int> rawData = base64.decode(data['msg']['data']);
+        List<double> points = [];
+        
+        // PointCloud2 데이터를 float32 배열로 변환
+        for (int i = 0; i < rawData.length; i += 4) {
+          if (i + 3 < rawData.length) {
+            var bytes = Uint8List.fromList(rawData.sublist(i, i + 4));
+            var value = ByteData.sublistView(bytes).getFloat32(0, Endian.little);
+            points.add(value);
+          }
+        }
+        
+        callback(points);
+      }
+    });
+  }
+
   void disconnect() {
     if (channel != null) {
       channel?.sink.close();

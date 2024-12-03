@@ -1,10 +1,10 @@
 topic_compressor:
   topics:
     - name: "point_cloud_1"
-      from: "/cam1/point_cloud_face"
-      to: "/cam1/point_cloud_face/compressed"
-      compression_ratio: 10
-    - name: "point_cloud_2"
-      from: "/camera/depth/points"
-      to: "/camera/depth/points/compressed"
-      compression_ratio: 10
+      from: "/os_cloud_node/points"
+      to: "/os_cloud_node/points/downsampled"
+      compression_ratio: 0.5
+    # - name: "point_cloud_2"
+    #   from: "/camera/depth/points"
+    #   to: "/camera/depth/points/compressed"
+    #   compression_ratio: 10

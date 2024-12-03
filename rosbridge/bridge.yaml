@@ -1,9 +1,0 @@
-topics:
-  - topic: /tf
-    type: tf2_msgs/msg/TFMessage
-  - topic: /tf_static
-    type: tf2_msgs/msg/TFMessage
-    queue_size: 1
-  - topic: /camera_face/color/image_raw
-    type: sensor_msgs/Image
-    queue_size: 1

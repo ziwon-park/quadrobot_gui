@@ -21,8 +21,10 @@ class _CameraViewerState extends State<CameraViewer> {
 
   Future<void> _connectToRos() async {
     await _rosService.connect();
+    print("ROS Connected, subscribing to compressedImage...");
+
     _rosService.subscribeImage(
-      '/camera_face/color/image_raw/compressed', 
+      '/go1_gazebo/camera/color/image_raw/compressed', 
       (Uint8List data, int size) {
         _imageNotifier.value = data;
       }
