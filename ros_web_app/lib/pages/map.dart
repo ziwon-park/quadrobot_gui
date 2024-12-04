@@ -82,10 +82,10 @@ class _MapViewerState extends State<MapViewer> {
     return Card(
       elevation: 4.0,
       child: Container(
-        height: 600,
+        height: MediaQuery.of(context).size.height * 0.5,
         padding: EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               'Map View',
@@ -96,9 +96,15 @@ class _MapViewerState extends State<MapViewer> {
             ),
             SizedBox(height: 16.0),
             Expanded(
-              child: mapImage == null
-                  ? Center(child: CircularProgressIndicator())
-                  : InteractiveViewer(
+              child: Center(
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: 800,
+                    maxHeight: 600,
+                  ),
+                  child: mapImage == null
+                    ? Center(child: CircularProgressIndicator())
+                    : InteractiveViewer(
                       boundaryMargin: EdgeInsets.all(20.0),
                       minScale: 0.1,
                       maxScale: 4.0,
@@ -107,6 +113,8 @@ class _MapViewerState extends State<MapViewer> {
                         size: Size(mapWidth.toDouble(), mapHeight.toDouble()),
                       ),
                     ),
+                ),
+              ),
             ),
           ],
         ),

@@ -37,10 +37,10 @@ class _CameraViewerState extends State<CameraViewer> {
     return Card(
       elevation: 4.0,
       child: Container(
-        height: 300,
+        height: MediaQuery.of(context).size.height * 0.5,
         padding: EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               'Camera View',
@@ -51,19 +51,27 @@ class _CameraViewerState extends State<CameraViewer> {
             ),
             SizedBox(height: 8.0),
             Expanded(
-              child: ValueListenableBuilder<Uint8List?>(
-                valueListenable: _imageNotifier,
-                builder: (context, imageData, child) {
-                  return imageData != null
-                    ? Image.memory(
-                        imageData,
-                        fit: BoxFit.contain,
-                        gaplessPlayback: true,
-                      )
-                    : Center(
-                        child: CircularProgressIndicator(),
-                      );
-                },
+              child: Center(
+                child: ValueListenableBuilder<Uint8List?>(
+                  valueListenable: _imageNotifier,
+                  builder: (context, imageData, child) {
+                    return imageData != null
+                      ? Container(
+                          constraints: BoxConstraints(
+                            maxWidth: 800,
+                            maxHeight: 600,
+                          ),
+                          child: Image.memory(
+                            imageData,
+                            fit: BoxFit.contain,
+                            gaplessPlayback: true,
+                          ),
+                        )
+                      : Center(
+                          child: CircularProgressIndicator(),
+                        );
+                  },
+                ),
               ),
             ),
           ],

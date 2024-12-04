@@ -30,46 +30,53 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildWideLayout() {
-    return Column(
-      children: [
-        // First row
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Center(
+      child: Container(
+        constraints: BoxConstraints(maxWidth: 1600),
+        child: Column(
           children: [
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: CameraViewer(),
-              ),
+            // First row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: MapViewer(),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CameraViewer(),
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: MapViewer(),
-              ),
+            SizedBox(height: 16.0),
+            // Second row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CommunicationPanel(),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: ControllerBlock(),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        SizedBox(height: 16.0),
-        // Second row
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: CommunicationPanel(),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: ControllerBlock(),
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 
@@ -78,12 +85,12 @@ class _MainPageState extends State<MainPage> {
       children: [
         Padding(
           padding: EdgeInsets.all(8.0),
-          child: CameraViewer(),
+          child: MapViewer(),
         ),
         SizedBox(height: 16.0),
         Padding(
           padding: EdgeInsets.all(8.0),
-          child: MapViewer(),
+          child: CameraViewer(),
         ),
         SizedBox(height: 16.0),
         Padding(
