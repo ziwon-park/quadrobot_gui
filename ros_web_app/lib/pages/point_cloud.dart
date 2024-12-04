@@ -1,85 +1,111 @@
 import 'package:flutter/material.dart';
-import 'dart:html' as html;
-import 'dart:ui' as ui;
-import 'dart:convert';
-
-class PointCloudViewer extends StatefulWidget {
-  final List<List<double>> points;
-  final String title;
-
-  const PointCloudViewer({
-    Key? key,
-    required this.points,
-    this.title = 'Point Cloud Visualization',
-  }) : super(key: key);
-
-  @override
-  State<PointCloudViewer> createState() => _PointCloudViewerState();
-}
+import 'package:three_dart/three_dart.dart';
+import 'package:three_dart/three_dart.dart' as three;
+import 'package:flutter_gl/flutter_gl.dart';
+import 'dart:typed_data';
 
 class _PointCloudViewerState extends State<PointCloudViewer> {
-  late final String viewId;
-
+  late Scene scene;
+  late PerspectiveCamera camera;
+  late WebGLRenderer renderer;
+  late OrbitControls controls;
+  Points? pointCloud;
+  final ValueNotifier<Uint8List?> _pointCloudNotifier = ValueNotifier<Uint8List?>(null);
+  late RosService _rosService;
+  
   @override
   void initState() {
     super.initState();
-    viewId = 'point-cloud-view-${DateTime.now().millisecondsSinceEpoch}';
-    ui.platformViewRegistry.registerViewFactory(
-      viewId, 
-      (int viewId) => _createHtmlElement(),
-    );
+    _rosService = RosService(globals.full_address);
+    _initThree();
+    _connectToRos();
   }
 
-  html.HtmlElement _createHtmlElement() {
-    final div = html.DivElement()
-      ..style.width = '100%'
-      ..style.height = '100%'
-      ..id = 'plot';
+  void _initThree() async {
+    scene = Scene();
     
-    final pointsJson = jsonEncode(widget.points);
+    camera = PerspectiveCamera(
+      75, 
+      MediaQuery.of(context).size.width / MediaQuery.of(context).size.height,
+      0.1,
+      1000
+    );
+    camera.position.z = 5;
     
-    // Plotly.js 스크립트 추가
-    final plotlyScript = html.ScriptElement()
-      ..src = 'https://cdn.plot.ly/plotly-latest.min.js';
-    div.children.add(plotlyScript);
+    var gl = await FlutterGl.initialize();
+    renderer = WebGLRenderer(gl);
+    renderer.setSize(
+      MediaQuery.of(context).size.width.toInt(),
+      MediaQuery.of(context).size.height.toInt()
+    );
     
-    // 데이터 시각화 스크립트 추가
-    final visualizationScript = html.ScriptElement()
-      ..text = '''
-        const points = $pointsJson;
-        
-        const trace = {
-          type: 'scatter3d',
-          mode: 'markers',
-          x: points.map(p => p[0]),
-          y: points.map(p => p[1]),
-          z: points.map(p => p[2]),
-          marker: {
-            size: 2,
-            opacity: 0.8,
-          }
-        };
+    controls = OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    
+    var ambientLight = AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    
+    var directionalLight = DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(0, 1, 0);
+    scene.add(directionalLight);
+    
+    _animate();
+  }
 
-        const layout = {
-          margin: { l: 0, r: 0, b: 0, t: 0 },
-          scene: {
-            camera: {
-              eye: { x: 1.5, y: 1.5, z: 1.5 }
-            }
-          }
-        };
+  void _animate() {
+    controls.update();
+    renderer.render(scene, camera);
+    Future.delayed(Duration(milliseconds: 16), _animate);
+  }
 
-        plotlyScript.onload = () => {
-          Plotly.newPlot('plot', [trace], layout);
-        };
-      ''';
-    div.children.add(visualizationScript);
+  void _updatePointCloud(List<double> points) {
+    if (pointCloud != null) {
+      scene.remove(pointCloud!);
+    }
+    
+    var geometry = BufferGeometry();
+    var positions = Float32Array.fromList(points);
+    
+    geometry.setAttribute(
+      'position',
+      BufferAttribute(positions, 3)  
+    );
+    
+    var material = PointsMaterial(
+      color: Color(0x00ff00),  
+      size: 0.02,
+      sizeAttenuation: true
+    );
+    
+    pointCloud = Points(geometry, material);
+    scene.add(pointCloud!);
+  }
 
-    return div;
+  Future<void> _connectToRos() async {
+    await _rosService.connect();
+    print("ROS Connected, subscribing to PointCloud...");
+    
+    _rosService.subscribeToPointCloud(
+      globals.topics['point_cloud']!,
+      (points) {
+        _updatePointCloud(points);
+      }
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return HtmlElementView(viewType: viewId);
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      child: renderer.domElement
+    );
+  }
+
+  @override
+  void dispose() {
+    controls.dispose();
+    renderer.dispose();
+    super.dispose();
   }
 }

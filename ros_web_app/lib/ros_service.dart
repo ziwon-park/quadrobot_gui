@@ -12,7 +12,7 @@ class RosService {
   Future<void> connect() async {
     try {
       channel = WebSocketChannel.connect(Uri.parse(uri));
-      // 연결 후 상태 확인을 위한 ping 메시지 전송
+
       // var pingMessage = {
       //   'op': 'ping'
       // };
@@ -66,7 +66,6 @@ class RosService {
         List<int> rawData = base64.decode(data['msg']['data']);
         List<double> points = [];
         
-        // PointCloud2 데이터를 float32 배열로 변환
         for (int i = 0; i < rawData.length; i += 4) {
           if (i + 3 < rawData.length) {
             var bytes = Uint8List.fromList(rawData.sublist(i, i + 4));

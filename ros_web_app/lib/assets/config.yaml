@@ -2,3 +2,9 @@ robot_id : "unitree_go1"
 ip_address : "0.0.0.0"
 rosbridge_port : "9090"
 fastapi_port : "8000"
+
+topics:
+  camera: "/go1_gazebo/camera/color/image_raw/compressed"
+  cmd_vel: "/cmd/velocity"
+  point_cloud: "/os_cloud_node/points/downsampled"
+  twist: "/go1/cenet/twist"

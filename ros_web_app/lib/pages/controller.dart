@@ -77,7 +77,7 @@ class _ControllerBlockState extends State<ControllerBlock> {
 
     var message = {
       'op': 'publish',
-      'topic': '/cmd/velocity',
+      'topic': globals.topics['cmd_vel'],
       'msg': {
         'linear': {'x': linear, 'y': 0.0, 'z': 0.0},
         'angular': {'x': 0.0, 'y': 0.0, 'z': angular}

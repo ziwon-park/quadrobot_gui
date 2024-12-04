@@ -24,7 +24,7 @@ class _CameraViewerState extends State<CameraViewer> {
     print("ROS Connected, subscribing to compressedImage...");
 
     _rosService.subscribeImage(
-      '/go1_gazebo/camera/color/image_raw/compressed', 
+      globals.topics['camera']!, 
       (Uint8List data, int size) {
         _imageNotifier.value = data;
       }

@@ -57,10 +57,10 @@ class _MapViewerState extends State<MapViewer> {
         color = 0xFFFFFFFF;  // White
       }
 
-      bytes[pixelIndex++] = (color >> 16) & 0xFF;  // R
-      bytes[pixelIndex++] = (color >> 8) & 0xFF;   // G
-      bytes[pixelIndex++] = color & 0xFF;          // B
-      bytes[pixelIndex++] = 0xFF;                  // A
+      bytes[pixelIndex++] = (color >> 16) & 0xFF; 
+      bytes[pixelIndex++] = (color >> 8) & 0xFF;  
+      bytes[pixelIndex++] = color & 0xFF;         
+      bytes[pixelIndex++] = 0xFF;                 
     }
 
     final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(bytes);

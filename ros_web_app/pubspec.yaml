@@ -35,6 +35,9 @@ dependencies:
   http: ^0.13.4
   yaml: ^3.1.2
   fl_chart: ^0.65.0
+  three_dart: ^0.0.16
+  flutter_gl: ^0.0.21
+  vector_math: ^2.1.4 
   # webview_flutter: ^4.10.0
   # webview_flutter_web: ^4.2.0 
 

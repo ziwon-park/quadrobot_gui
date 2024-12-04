@@ -47,6 +47,15 @@ class _InitialPageState extends State<InitialPage> {
     globals.fastapi_port = yamlDoc['fastapi_port'];
     globals.ip_address =  yamlIpAddress;
 
+    // Load topic configurations
+    if (yamlDoc['topics'] != null) {
+      final topics = yamlDoc['topics'] as YamlMap;
+      globals.topics['camera'] = topics['camera'];
+      globals.topics['cmd_vel'] = topics['cmd_vel'];
+      globals.topics['point_cloud'] = topics['point_cloud'];
+      globals.topics['twist'] = topics['twist'];
+    }
+
     String fullAddress = "ws://$yamlIpAddress:${ipController.text}";
 
     globals.full_address = fullAddress;
@@ -173,5 +182,3 @@ class _InitialPageState extends State<InitialPage> {
     );
   }
 }
-
-

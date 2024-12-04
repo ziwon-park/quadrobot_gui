@@ -29,20 +29,16 @@ class TopicStats {
   void updateStats() {
     final now = DateTime.now();
     
-    // Hz 계산: 최근 1초 동안의 메시지 수 계산
     messageTimestamps = messageTimestamps.where(
       (timestamp) => now.difference(timestamp).inMilliseconds < HZ_WINDOW_DURATION
     ).toList();
     
-    // 실제 Hz 계산
     hz = messageTimestamps.length.toDouble();
     
-    // Latency 계산: 최근 메시지들의 평균 지연시간
     if (recentLatencies.isNotEmpty) {
       latency = recentLatencies.reduce((a, b) => a + b) / recentLatencies.length;
     }
     
-    // Bandwidth 계산 (마지막 1초 동안의 총 데이터 크기)
     if (lastMessageTime != null) {
       final duration = now.difference(lastMessageTime!);
       if (duration.inSeconds >= 1) {
@@ -58,21 +54,17 @@ class TopicStats {
   void onMessageReceived(int messageSize) {
     final now = DateTime.now();
     
-    // 메시지 타임스탬프 저장
     messageTimestamps.add(now);
     
-    // latency 계산 및 저장
     if (lastMessageTime != null) {
       final currentLatency = now.difference(lastMessageTime!).inMilliseconds.toDouble();
       recentLatencies.add(currentLatency);
       
-      // 윈도우 크기 유지
       if (recentLatencies.length > LATENCY_WINDOW_SIZE) {
         recentLatencies.removeAt(0);
       }
     }
     
-    // 대역폭 계산을 위한 데이터 갱신
     messageCount++;
     lastMessageSize = messageSize;
     lastMessageTime = now;
@@ -97,7 +89,6 @@ class _CommunicationPanelState extends State<CommunicationPanel> {
     Colors.orange,
   ];
 
-  // max 값을 계산하는 헬퍼 메소드
   double getMaxValue(List<double> values) {
     if (values.isEmpty) return 10.0;
     return values.reduce((a, b) => math.max(a, b));
