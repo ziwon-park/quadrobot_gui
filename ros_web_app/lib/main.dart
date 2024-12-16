@@ -146,6 +146,7 @@ class _InitialPageState extends State<InitialPage> {
                         ),
                       ),
                       keyboardType: TextInputType.number,
+                      onSubmitted: (value) => onPressed(ipController),
                     ),
                     SizedBox(height: 24),
                     ElevatedButton(

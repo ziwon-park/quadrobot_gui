@@ -1,84 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:three_dart/three_dart.dart';
-import 'package:three_dart/three_dart.dart' as three;
-import 'package:flutter_gl/flutter_gl.dart';
 import 'dart:typed_data';
+import '../ros_service.dart';
+import '../globals.dart' as globals;
+
+class PointCloudViewer extends StatefulWidget {
+  @override
+  _PointCloudViewerState createState() => _PointCloudViewerState();
+}
 
 class _PointCloudViewerState extends State<PointCloudViewer> {
-  late Scene scene;
-  late PerspectiveCamera camera;
-  late WebGLRenderer renderer;
-  late OrbitControls controls;
-  Points? pointCloud;
-  final ValueNotifier<Uint8List?> _pointCloudNotifier = ValueNotifier<Uint8List?>(null);
+  List<Offset> points = [];
   late RosService _rosService;
+  
+  // 뷰어 설정
+  final double pointSize = 4.0;  // 점 크기
+  final double scale = 20.0;     // 스케일 팩터 (미터를 픽셀로 변환)
   
   @override
   void initState() {
     super.initState();
     _rosService = RosService(globals.full_address);
-    _initThree();
     _connectToRos();
-  }
-
-  void _initThree() async {
-    scene = Scene();
-    
-    camera = PerspectiveCamera(
-      75, 
-      MediaQuery.of(context).size.width / MediaQuery.of(context).size.height,
-      0.1,
-      1000
-    );
-    camera.position.z = 5;
-    
-    var gl = await FlutterGl.initialize();
-    renderer = WebGLRenderer(gl);
-    renderer.setSize(
-      MediaQuery.of(context).size.width.toInt(),
-      MediaQuery.of(context).size.height.toInt()
-    );
-    
-    controls = OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    
-    var ambientLight = AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-    
-    var directionalLight = DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(0, 1, 0);
-    scene.add(directionalLight);
-    
-    _animate();
-  }
-
-  void _animate() {
-    controls.update();
-    renderer.render(scene, camera);
-    Future.delayed(Duration(milliseconds: 16), _animate);
-  }
-
-  void _updatePointCloud(List<double> points) {
-    if (pointCloud != null) {
-      scene.remove(pointCloud!);
-    }
-    
-    var geometry = BufferGeometry();
-    var positions = Float32Array.fromList(points);
-    
-    geometry.setAttribute(
-      'position',
-      BufferAttribute(positions, 3)  
-    );
-    
-    var material = PointsMaterial(
-      color: Color(0x00ff00),  
-      size: 0.02,
-      sizeAttenuation: true
-    );
-    
-    pointCloud = Points(geometry, material);
-    scene.add(pointCloud!);
   }
 
   Future<void> _connectToRos() async {
@@ -87,25 +29,96 @@ class _PointCloudViewerState extends State<PointCloudViewer> {
     
     _rosService.subscribeToPointCloud(
       globals.topics['point_cloud']!,
-      (points) {
-        _updatePointCloud(points);
+      (pointData) {
+        _updatePoints(pointData);
       }
     );
+  }
+
+  void _updatePoints(List<double> rawPoints) {
+    List<Offset> newPoints = [];
+    
+    // x, y, z 좌표를 2D 포인트로 변환
+    for (int i = 0; i < rawPoints.length; i += 3) {
+      if (i + 2 < rawPoints.length) {
+        // x와 y 좌표만 사용 (z는 무시)
+        double x = rawPoints[i];
+        double y = rawPoints[i + 1];
+        
+        newPoints.add(Offset(x, y));
+      }
+    }
+    
+    setState(() {
+      points = newPoints;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height,
-      child: renderer.domElement
+      color: Colors.black,
+      child: CustomPaint(
+        painter: PointCloudPainter(
+          points: points,
+          pointSize: pointSize,
+          scale: scale,
+        ),
+        size: Size.infinite,
+      ),
     );
   }
+}
 
+class PointCloudPainter extends CustomPainter {
+  final List<Offset> points;
+  final double pointSize;
+  final double scale;
+  
+  PointCloudPainter({
+    required this.points,
+    required this.pointSize,
+    required this.scale,
+  });
+  
   @override
-  void dispose() {
-    controls.dispose();
-    renderer.dispose();
-    super.dispose();
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.green
+      ..style = PaintingStyle.fill;
+      
+    // 캔버스를 중앙으로 이동
+    canvas.translate(size.width / 2, size.height / 2);
+    
+    // 모든 포인트 그리기
+    for (var point in points) {
+      canvas.drawCircle(
+        Offset(point.dx * scale, point.dy * scale),
+        pointSize,
+        paint,
+      );
+    }
+    
+    // 좌표축 그리기 (옵션)
+    final axisPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+      
+    canvas.drawLine(
+      Offset(-size.width/2, 0),
+      Offset(size.width/2, 0),
+      axisPaint,
+    );
+    canvas.drawLine(
+      Offset(0, -size.height/2),
+      Offset(0, size.height/2),
+      axisPaint,
+    );
+  }
+  
+  @override
+  bool shouldRepaint(covariant PointCloudPainter oldDelegate) {
+    return true;  // 항상 다시 그리기
   }
 }

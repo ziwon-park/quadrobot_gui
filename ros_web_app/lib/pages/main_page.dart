@@ -6,6 +6,7 @@ import './camera.dart';
 import './controller.dart';
 import './map.dart';
 import './communication.dart';
+import './button.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -20,7 +21,7 @@ class _MainPageState extends State<MainPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Robot Control Panel'),
+        title: Text('Quadruped Robot Panel'),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -55,7 +56,6 @@ class _MainPageState extends State<MainPage> {
               ],
             ),
             SizedBox(height: 16.0),
-            // Second row
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -63,7 +63,13 @@ class _MainPageState extends State<MainPage> {
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.all(8.0),
-                    child: CommunicationPanel(),
+                    child: Column(
+                      children: [
+                        CommunicationPanel(),
+                        SizedBox(height: 16.0),
+                        ButtonPanel(),  
+                      ],
+                    ),
                   ),
                 ),
                 Expanded(
@@ -95,7 +101,13 @@ class _MainPageState extends State<MainPage> {
         SizedBox(height: 16.0),
         Padding(
           padding: EdgeInsets.all(8.0),
-          child: CommunicationPanel(),
+          child: Column(
+            children: [
+              CommunicationPanel(),
+              SizedBox(height: 16.0),
+              ButtonPanel(),  
+            ],
+          ),
         ),
         SizedBox(height: 16.0),
         Padding(

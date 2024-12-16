@@ -125,6 +125,30 @@ class RosService {
     });
   }
 
+  void callButtonService(String service_name) {
+    if (channel != null) {
+      var message = {
+        'op': 'call_service',
+        'service': service_name,
+        'args': {}
+      };
+      channel?.sink.add(json.encode(message));
+    }
+  }
+
+  void publishButtonCommand(String topic, String command) {
+    if (channel != null) {
+      var message = {
+        'op': 'publish',
+        'topic': topic,
+        'msg': {
+          'data': command
+        }
+      };
+      channel?.sink.add(json.encode(message));
+    }
+  }
+
   void disconnect() {
     if (channel != null) {
       channel?.sink.close();
