@@ -47,7 +47,6 @@ class _InitialPageState extends State<InitialPage> {
     globals.fastapi_port = yamlDoc['fastapi_port'];
     globals.ip_address =  yamlIpAddress;
 
-    // Load topic configurations
     if (yamlDoc['topics'] != null) {
       final topics = yamlDoc['topics'] as YamlMap;
       globals.topics['camera'] = topics['camera'];
@@ -86,7 +85,7 @@ class _InitialPageState extends State<InitialPage> {
             children: <Widget>[
               Padding(
                 padding: EdgeInsets.only(top: 100.0),
-                child: Image.asset('/home/ubuntuurl/ziwon/gui_ws/src/ros_web_app/lib/assets/url_logo.png', height: 100),
+                child: Image.asset('lib/assets/url_logo.png', height: 100),
               ),
               Padding(
                 padding: EdgeInsets.only(top: 15.0),
@@ -110,7 +109,7 @@ class _InitialPageState extends State<InitialPage> {
                 ),
                 child: Column(
                   children: [
-                    Image.asset('/home/ubuntuurl/ziwon/gui_ws/src/ros_web_app/lib/assets/unitree_go1.png', height: 200),
+                    Image.asset('lib/assets/unitree_go1.png', height: 200),
                     SizedBox(height: 30),
                     DropdownButtonFormField<String>(
                       decoration: InputDecoration(

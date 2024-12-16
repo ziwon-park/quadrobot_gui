@@ -1,5 +1,5 @@
 robot_id : "unitree_go1"
-ip_address : "0.0.0.0"
+ip_address : "143.248.94.23"
 rosbridge_port : "9090"
 fastapi_port : "8000"
 

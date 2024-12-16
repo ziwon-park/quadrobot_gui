@@ -64,6 +64,7 @@ dev_dependencies:
 flutter:
   assets:
     - lib/assets/
+    - lib/assets/unitree_go1.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
